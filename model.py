@@ -44,8 +44,8 @@ def read_video_pyav(container, indices, target_size=(224, 224)):
     return np.stack([x.to_ndarray(format="rgb24") for x in frames])
 
 # Load and process video
-video_path_1 = "/Users/priyankaba/596-test/t1.mp4"
-container = av.open(video_path_1)
+video_path = "video.mp4"
+container = av.open(video_path)
 total_frames = container.streams.video[0].frames
 indices = np.arange(0, total_frames, total_frames / 20).astype(int)
 clip_car = read_video_pyav(container, indices)

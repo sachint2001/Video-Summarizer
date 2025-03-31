@@ -13,6 +13,12 @@ git clone https://github.com/sachint2001/Video-Summarizer.git
 cd Video-Summarizer
 ```
 
+Switch to this branch to access the code:
+```
+git checkout priyanka-blip-initial
+```
+
+
 ## Setup virtual environment
 
 ### Setup the virtual environment using:

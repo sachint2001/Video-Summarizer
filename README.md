@@ -51,12 +51,26 @@ TBC
 
 # Usage
 
-In the main function, modify the following variable as required:
+Modify the following variable as required:
 
-- video_path_1 = "video.mp4" (Path to the video you wish to summarize)
+- video_path = "video.mp4" (Path to the video you wish to summarize)
 <!-- - keyframe_folder = "keyframes/" (Folder to save the frames extracted)
 - captions_file = "frame_captions.txt" (File to save the captions generated)
 - final_summary_file = "video_summary.txt" (File to save the video summary generated) -->
+
+You can change the question asked to the model in the conversation variable:
+```
+conversation = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What do you see in this video?"},
+            {"type": "video"},
+        ],
+    },
+]
+```
+
 
 Run the code using:
 

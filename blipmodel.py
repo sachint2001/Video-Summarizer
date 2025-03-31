@@ -60,16 +60,16 @@ def summarize_captions(captions_file):
     chunks = chunk_text(captions_text, max_tokens=800)
     summaries = [summarizer(chunk, max_length=90, min_length=30, do_sample=False, truncation=True)[0]['summary_text'] for chunk in chunks]
     final_summary = summarizer(" ".join(summaries), max_length=100, min_length=30, do_sample=False, truncation=True)[0]['summary_text']
-    print("\nFinal Video Summary:")
+    print("\nVideo Summary:")
     print(final_summary)
     return final_summary
 
 def main():
     """Main function to orchestrate video processing and summarization."""
-    video_path = "t1.mp4"
-    keyframe_folder = "keyframes2"
-    captions_file = "video_summary2.txt"
-    final_summary_file = "final_video_summary2.txt"
+    video_path = "video.mp4"
+    keyframe_folder = "keyframes"
+    captions_file = "frame_captions.txt"
+    video_summary_file = "video_summary.txt"
 
     extract_keyframes(video_path, keyframe_folder)
     captions = generate_image_captions(keyframe_folder)
@@ -81,12 +81,9 @@ def main():
 
     final_summary = summarize_captions(captions_file)
 
-    with open(final_summary_file, "w") as f:
+    with open(video_summary_file, "w") as f:
         f.write(final_summary)
-    print(f"\nFinal summary saved to {final_summary_file}")
+    print(f"\nFinal summary saved to {video_summary_file}")
 
 if __name__ == "__main__":
     main()
-
-# Install necessary libraries if not already installed
-# !pip install transformers torch torchvision opencv-python Pillow

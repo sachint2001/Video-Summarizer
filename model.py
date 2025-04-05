@@ -37,7 +37,7 @@ model = 'gemma3:4b'
 
 
 # First prompt to tell the model what we are doing
-init_prompt = "You will receive frames from a video. For each frame, generate a concise one-sentence description."
+init_prompt = "You will receive frames from a video in sequence, one at a time. For each frame, generate a concise one-sentence description."
 ollama.generate(model, init_prompt)
 
 # List to store frames
@@ -53,7 +53,7 @@ for idx, image in enumerate(images, start=1):
         print(f"Error processing {image}: {e}")
 
 # Generate the final video summary
-summary_prompt = "Here are one-sentence descriptions of each frame of a video:\n" + "\n".join(frame_summaries) + "\nSummarize the overall video in a few sentences."
+summary_prompt = "Here are one-sentence descriptions of each frame of a video:\n" + "\n".join(frame_summaries) + "\nSummarize the overall video in a few sentences. Keep in mind that certain frames occuring one after the other could be describing the same incident that has just occured"
 final_summary = ollama.generate(model, summary_prompt)['response']
 
 

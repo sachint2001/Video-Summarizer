@@ -52,6 +52,9 @@ for idx, image in enumerate(images, start=1):
     except Exception as e:
         print(f"Error processing {image}: {e}")
 
+print("Captions:")
+print(frame_summaries)
+
 # Generate the final video summary
 summary_prompt = "Here are one-sentence descriptions of each frame of a video:\n" + "\n".join(frame_summaries) + "\nSummarize the overall video in a few sentences. Keep in mind that certain frames occuring one after the other could be describing the same incident that has just occured"
 final_summary = ollama.generate(model, summary_prompt)['response']

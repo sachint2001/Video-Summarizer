@@ -8,7 +8,14 @@ from flask_ml.flask_ml_server.models import (
     ResponseBody,
     TextResponse,
     BatchTextResponse,
+    FileInput,
+    InputSchema,
+    InputType,
+    DirectoryInput,
+    FileResponse
 )
+from datetime import datetime
+from pathlib import Path
 
 import ollama
 
@@ -19,8 +26,10 @@ FRAME_FOLDER = "video_frames/"
 MODEL_NAME = "gemma3:4b"
 
 
+
 class Inputs(TypedDict):
-    pass
+    input_file: FileInput
+    output_directory: DirectoryInput
 
 class Parameters(TypedDict):
     fps: int  
@@ -28,6 +37,16 @@ class Parameters(TypedDict):
 from flask_ml.flask_ml_server.models import IntParameterDescriptor
 
 def create_video_summary_schema() -> TaskSchema:
+    input_schema = InputSchema(
+        key="input_file",
+        label="Video file to summarize",
+        input_type=InputType.FILE,
+    )
+    output_schema = InputSchema(
+        key="output_directory",
+        label="Path to save results",
+        input_type=InputType.DIRECTORY,
+    )
     fps_param_schema = ParameterSchema(
         key="fps",
         label="Frame Rate (fps)",
@@ -35,7 +54,7 @@ def create_video_summary_schema() -> TaskSchema:
         value=IntParameterDescriptor(default=1, min=1, max=30),
     )
 
-    return TaskSchema(inputs=[], parameters=[fps_param_schema])
+    return TaskSchema(inputs=[input_schema, output_schema], parameters=[fps_param_schema])
 
 def extract_frames_ffmpeg(video_path, output_folder, fps=1):
     os.makedirs(output_folder, exist_ok=True)
@@ -59,8 +78,12 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
     fps = parameters.get("fps", 1)
 
    
-    extract_frames_ffmpeg(VIDEO_PATH, FRAME_FOLDER, fps=fps)
-
+    # extract_frames_ffmpeg(VIDEO_PATH, FRAME_FOLDER, fps=fps)
+    
+    extract_frames_ffmpeg(inputs["input_file"].path, FRAME_FOLDER, fps=fps)
+    out_path = Path(inputs["output_directory"].path)
+    out_path_captions = str(out_path / f"captions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+    out_path_summary = str(out_path / f"summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
     
     images = sorted([
         os.path.join(FRAME_FOLDER, f)
@@ -69,7 +92,7 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
     ])
 
     
-    ollama.generate(MODEL_NAME, "You will receive frames. Summarize each in one sentence.")
+    ollama.generate(MODEL_NAME, "You will receive frames from a video in sequence, one at a time. For each frame, generate a concise one-sentence description.")
 
    
     summaries = []
@@ -83,19 +106,31 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
 
     
     summary_prompt = (
-        "Here are frame summaries:\n" +
+        "Here are one-sentence descriptions of each frame of a video:\n" +
         "\n".join(summaries) +
-        "\nNow summarize the entire video in a few sentences."
+        "\nSummarize the overall video in a few sentences. Keep in mind that certain frames occuring one after the other could be describing the same incident that has just occured."
     )
 
     final_response = ollama.generate(MODEL_NAME, summary_prompt)
     final_summary = final_response['response']
 
-    return ResponseBody(
-        root=BatchTextResponse(texts=[
-            TextResponse(value=final_summary, title="Final Video Summary")
-        ])
-    )
+    # Write frame summaries
+    with open(out_path_captions, 'w', encoding='utf-8') as f:
+        for line in summaries:
+            f.write(line + '\n')
+
+    # Write final video summary
+    with open(out_path_summary, 'w', encoding='utf-8') as f:
+        f.write(final_summary.strip())
+
+    return ResponseBody(FileResponse(path=out_path_summary, file_type="text"))
+
+    # return ResponseBody(
+    #     root=BatchTextResponse(texts=[
+    #         TextResponse(value=final_summary, title="Final Video Summary")
+    #     ])
+    # )
+
 server.add_app_metadata(
     name= "Video Summarization",
     author="Priyanka",

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 from typing import TypedDict
 from flask_ml.flask_ml_server import MLServer
 from flask_ml.flask_ml_server.models import (
@@ -24,8 +25,6 @@ server = MLServer(__name__)
 VIDEO_PATH = "video.mp4"
 FRAME_FOLDER = "video_frames/"
 MODEL_NAME = "gemma3:4b"
-
-
 
 class Inputs(TypedDict):
     input_file: FileInput
@@ -77,9 +76,6 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
 
     fps = parameters.get("fps", 1)
 
-   
-    # extract_frames_ffmpeg(VIDEO_PATH, FRAME_FOLDER, fps=fps)
-    
     extract_frames_ffmpeg(inputs["input_file"].path, FRAME_FOLDER, fps=fps)
     out_path = Path(inputs["output_directory"].path)
     out_path_captions = str(out_path / f"captions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
@@ -91,10 +87,8 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
         if f.lower().endswith(('.jpg', '.jpeg', '.png'))
     ])
 
-    
     ollama.generate(MODEL_NAME, "You will receive frames from a video in sequence, one at a time. For each frame, generate a concise one-sentence description.")
 
-   
     summaries = []
     for idx, image in enumerate(images, start=1):
         prompt = f"This is frame {idx} of the video. Summarize it in one sentence."
@@ -104,7 +98,6 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
         except Exception as e:
             summaries.append(f"Frame {idx}: Error - {e}")
 
-    
     summary_prompt = (
         "Here are one-sentence descriptions of each frame of a video:\n" +
         "\n".join(summaries) +
@@ -114,30 +107,23 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
     final_response = ollama.generate(MODEL_NAME, summary_prompt)
     final_summary = final_response['response']
 
-    # Write frame summaries
     with open(out_path_captions, 'w', encoding='utf-8') as f:
         for line in summaries:
             f.write(line + '\n')
 
-    # Write final video summary
     with open(out_path_summary, 'w', encoding='utf-8') as f:
         f.write(final_summary.strip())
 
+    shutil.rmtree(FRAME_FOLDER, ignore_errors=True)
+
     return ResponseBody(FileResponse(path=out_path_summary, file_type="text"))
 
-    # return ResponseBody(
-    #     root=BatchTextResponse(texts=[
-    #         TextResponse(value=final_summary, title="Final Video Summary")
-    #     ])
-    # )
-
 server.add_app_metadata(
-    name= "Video Summarization",
+    name="Video Summarization",
     author="Priyanka",
-    version= "1.0.0",
-    info= "Video Summarization using Gemma model."
+    version="1.0.0",
+    info="Video Summarization using Gemma model."
 )
-
 
 if __name__ == "__main__":
     server.run(debug=True)

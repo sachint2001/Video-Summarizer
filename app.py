@@ -167,8 +167,9 @@ def summarize_video(inputs: Inputs, parameters: Parameters):
         for line in summaries:
             f.write(line + '\n')
 
-    with open(out_path_transcription, 'w', encoding='utf-8') as f:
-        f.write(transcribed_text.strip())
+    if audio_transcribe:
+        with open(out_path_transcription, 'w', encoding='utf-8') as f:
+            f.write(transcribed_text.strip())
 
     with open(out_path_summary, 'w', encoding='utf-8') as f:
         f.write(final_summary.strip())

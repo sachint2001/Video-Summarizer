@@ -1,3 +1,5 @@
+# This file contains the code used to make the program for the Flask-ML server. Final code is in app.py
+
 import subprocess
 import ollama
 import os

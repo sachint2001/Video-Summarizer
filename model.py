@@ -39,7 +39,10 @@ model = 'gemma3:4b'
 
 
 # First prompt to tell the model what we are doing
-init_prompt = "You will receive frames from a video in sequence, one at a time. For each frame, generate a concise one-sentence description."
+init_prompt = (
+    "You will receive frames from a surveillance video. Your task is to carefully analyze each frame and identify any suspicious or potentially criminal activity, "
+    "such as theft, violence, trespassing, kidnapping or unusual behavior. Generate a short, descriptive sentence for each frame, focusing specifically on signs of criminal activity or threats to safety. If no criminal activity is found, just summarize whatever is happening in the frames."
+)
 ollama.generate(model, init_prompt)
 
 # List to store frames
@@ -47,7 +50,13 @@ frame_summaries = []
 
 # Process each frame individually
 for idx, image in enumerate(images, start=1):
-    prompt = f"This is frame {idx} of the video. Summarize it in one sentence."
+    prompt = (
+    f"This is frame {idx + 1} of a video. "
+    "Carefully examine the image. If there is any sign of criminal or suspicious activity, "
+    "summarize the criminal action clearly in one sentence. "
+    "If there is no crime, just describe what is happening in the scene in a few sentences."
+)
+
     try:
         response = ollama.generate(model, prompt, images=[image])
         frame_summaries.append(f"Frame {idx}: {response['response']}")
@@ -58,7 +67,12 @@ print("Captions:")
 print(frame_summaries)
 
 # Generate the final video summary
-summary_prompt = "Here are one-sentence descriptions of each frame of a video:\n" + "\n".join(frame_summaries) + "\nSummarize the overall video in a few sentences. Keep in mind that certain frames occuring one after the other could be describing the same incident that has just occured"
+summary_prompt = (
+    "Here are one-sentence crime-related observations from frames of a surveillance video:\n"
+    + "\n".join(frame_summaries)
+    + "\nBased on this, summarize the video by identifying any patterns, escalating incidents, or repeated suspicious activities. "
+      "Clearly state what crimes or threats were observed and if any actions appear to be part of the same event. If no crimes are found, just summarize whatever is happening in the video" 
+)
 final_summary = ollama.generate(model, summary_prompt)['response']
 
 

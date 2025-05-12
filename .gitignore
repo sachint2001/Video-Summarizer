@@ -2,6 +2,9 @@
 /videosumm-env
 /Resultsvenv/
 /Results
-/venv
+venv/
 req2.txt
 space.mp4
+captions_*.csv
+summary_*.txt
+transcription_*.*

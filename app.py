@@ -54,10 +54,10 @@ def create_video_summary_schema() -> TaskSchema:
         input_type=InputType.DIRECTORY,
     )
     fps_param_schema = ParameterSchema(
-        key="fps",
-        label="Frame Rate (fps)",
-        subtitle="Set how many frames per second to extract from the video",
-        value=IntParameterDescriptor(default=1, min=1, max=30),
+    key="fps",
+    label="Frame Interval (seconds)",
+    subtitle="Extract one frame every X seconds from the video",
+    value=IntParameterDescriptor(default=1, min=1, max=30),
     )
     audio_tran_schema = ParameterSchema(
         key="audio_tran",
@@ -86,13 +86,14 @@ def clean_caption_formatting(caption):
     # Trim leading/trailing spaces
     return caption.strip()
 
-def extract_frames_ffmpeg(video_path, output_folder, fps=1):
+def extract_frames_ffmpeg(video_path, output_folder, interval_seconds=1):
     os.makedirs(output_folder, exist_ok=True)
     output_pattern = os.path.join(output_folder, "frame_%04d.jpg")
     command = [
         "ffmpeg",
         "-i", video_path,
-        "-vf", f"fps={fps}",
+        "-vf", f"select='not(mod(n, {int(30 * interval_seconds)}))'",  
+        "-vsync", "0",
         output_pattern
     ]
     subprocess.run(command, check=True)
@@ -120,10 +121,13 @@ def transcribe_audio(audio_path):
     order=0
 )
 def summarize_video(inputs: Inputs, parameters: Parameters):  
-    fps = parameters.get("fps", 1)
+    frame_interval = parameters.get("fps", 1)
+    fps=1/frame_interval
 
     # Step 1: Extract frames from the video
-    extract_frames_ffmpeg(inputs["input_file"].path, FRAME_FOLDER, fps=fps)
+    interval = parameters.get("fps", 1)
+    extract_frames_ffmpeg(inputs["input_file"].path, FRAME_FOLDER, interval_seconds=interval)
+
 
     # Step 2: Extract audio and transcribe it if needed
     audio_transcribe = parameters.get("audio_tran", "yes") == "yes"
